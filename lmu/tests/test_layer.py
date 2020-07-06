@@ -30,8 +30,8 @@ def test_keras_bidirectional():
     layer = Bidirectional(
         forward_layer
     )
-    print(layer.__dict__.keys())
-    #assert layer.cell.__class__.__name__ == 'LMUCell'
+    print(dir(layer))
+    assert layer.cells[0].__class__.__name__ == 'LMUCell'
 
 
 def test_keras_stacked_rnn():
