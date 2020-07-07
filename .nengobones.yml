@@ -22,6 +22,9 @@ setup_py:
     - IPython>=7.2.0
     - notebook>=5.7.4
     - seaborn>=0.9.0
+    - sphinx>=1.8
+    - nbsphinx
+    - nengo_sphinx_theme>=1.2.0
   optional_req:
     - scipy
   classifiers:
@@ -38,6 +41,13 @@ setup_py:
     - "Topic :: Scientific/Engineering :: Artificial Intelligence"
 
 setup_cfg: {}
+
+docs_conf_py:
+  intersphinx_mapping:
+    scipy: "https://docs.scipy.org/doc/scipy/reference"  # optional?
+  analytics_id: UA-41658423-2  # confirm
+  html_redirects:
+    getting_started.html: getting-started.html
 
 travis_yml:
   python: 3.6

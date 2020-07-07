@@ -38,6 +38,9 @@ docs_req = [
     "IPython>=7.2.0",
     "notebook>=5.7.4",
     "seaborn>=0.9.0",
+    "sphinx>=1.8",
+    "nbsphinx",
+    "nengo_sphinx_theme>=1.2.0",
 ]
 optional_req = [
     "scipy",
