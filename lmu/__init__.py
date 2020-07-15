@@ -1,6 +1,13 @@
 """LMU provides a package for deep learning with Legendre Memory Units."""
 
-from .lmu import Legendre, InputScaled, LMUCell, LMUCellODE, LMUCellGating
+from .lmu import (
+    Legendre,
+    InputScaled,
+    LMUCell,
+    LMUCellODE,
+    LMUCellGating,
+    FeedForwardCell,
+)
 
 from .version import version as __version__
 

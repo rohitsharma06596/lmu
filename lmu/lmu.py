@@ -9,6 +9,9 @@ from tensorflow.keras import backend as K
 from tensorflow.keras import activations, initializers
 from tensorflow.keras.initializers import Constant, Initializer
 from tensorflow.keras.layers import Layer
+from tensorflow.keras.initializers import (
+    Identity as Id,
+)  # To avoid interference with Identity from nengolib.signal
 
 from nengolib.signal import Identity, cont2discrete
 from nengolib.synapses import LegendreDelay
@@ -258,6 +261,33 @@ class LMUCell(Layer):
         )
 
         return config
+
+
+class FeedForwardCell(LMUCell):
+    def __init__(self, order, theta, **kwargs):
+        super().__init__(
+            units=order,
+            order=order,
+            theta=theta,
+            trainable_input_encoders=False,
+            trainable_hidden_encoders=False,
+            trainable_memory_encoders=False,
+            trainable_input_kernel=False,
+            trainable_hidden_kernel=False,
+            trainable_memory_kernel=False,
+            trainable_A=False,
+            trainable_B=False,
+            input_encoders_initializer=Constant(
+                1
+            ),  # Here we should be assuming 1-d Input (i.e input encoders already applied)
+            hidden_encoders_initializer=Constant(0),
+            memory_encoders_initializer=Constant(0),
+            input_kernel_initializer=Constant(0),
+            hidden_kernel_initializer=Constant(0),
+            memory_kernel_initializer=Id(),
+            hidden_activation="linear",
+            **kwargs
+        )
 
 
 class InputScaled(Initializer):
