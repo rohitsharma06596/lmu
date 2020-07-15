@@ -80,6 +80,7 @@ class LMUCell(Layer):
         hidden_kernel_initializer="glorot_normal",
         memory_kernel_initializer="glorot_normal",
         hidden_activation="tanh",
+        feed_forward=False,
         **kwargs
     ):
         super().__init__(**kwargs)
@@ -107,6 +108,8 @@ class LMUCell(Layer):
         self.memory_kernel_initializer = initializers.get(memory_kernel_initializer)
 
         self.hidden_activation = activations.get(hidden_activation)
+
+        self.feed_forward = feed_forward
 
         self._realizer_result = realizer(factory(theta=theta, order=self.order))
         self._ss = cont2discrete(
@@ -144,48 +147,48 @@ class LMUCell(Layer):
         input_dim = input_shape[-1]
 
         # TODO: add regularizers
+        if not self.feed_forward:
+            self.input_encoders = self.add_weight(
+                name="input_encoders",
+                shape=(input_dim, 1),
+                initializer=self.input_encoders_initializer,
+                trainable=self.trainable_input_encoders,
+            )
 
-        self.input_encoders = self.add_weight(
-            name="input_encoders",
-            shape=(input_dim, 1),
-            initializer=self.input_encoders_initializer,
-            trainable=self.trainable_input_encoders,
-        )
+            self.hidden_encoders = self.add_weight(
+                name="hidden_encoders",
+                shape=(self.units, 1),
+                initializer=self.hidden_encoders_initializer,
+                trainable=self.trainable_hidden_encoders,
+            )
 
-        self.hidden_encoders = self.add_weight(
-            name="hidden_encoders",
-            shape=(self.units, 1),
-            initializer=self.hidden_encoders_initializer,
-            trainable=self.trainable_hidden_encoders,
-        )
+            self.memory_encoders = self.add_weight(
+                name="memory_encoders",
+                shape=(self.order, 1),
+                initializer=self.memory_encoders_initializer,
+                trainable=self.trainable_memory_encoders,
+            )
 
-        self.memory_encoders = self.add_weight(
-            name="memory_encoders",
-            shape=(self.order, 1),
-            initializer=self.memory_encoders_initializer,
-            trainable=self.trainable_memory_encoders,
-        )
+            self.input_kernel = self.add_weight(
+                name="input_kernel",
+                shape=(input_dim, self.units),
+                initializer=self.input_kernel_initializer,
+                trainable=self.trainable_input_kernel,
+            )
 
-        self.input_kernel = self.add_weight(
-            name="input_kernel",
-            shape=(input_dim, self.units),
-            initializer=self.input_kernel_initializer,
-            trainable=self.trainable_input_kernel,
-        )
+            self.hidden_kernel = self.add_weight(
+                name="hidden_kernel",
+                shape=(self.units, self.units),
+                initializer=self.hidden_kernel_initializer,
+                trainable=self.trainable_hidden_kernel,
+            )
 
-        self.hidden_kernel = self.add_weight(
-            name="hidden_kernel",
-            shape=(self.units, self.units),
-            initializer=self.hidden_kernel_initializer,
-            trainable=self.trainable_hidden_kernel,
-        )
-
-        self.memory_kernel = self.add_weight(
-            name="memory_kernel",
-            shape=(self.order, self.units),
-            initializer=self.memory_kernel_initializer,
-            trainable=self.trainable_memory_kernel,
-        )
+            self.memory_kernel = self.add_weight(
+                name="memory_kernel",
+                shape=(self.order, self.units),
+                initializer=self.memory_kernel_initializer,
+                trainable=self.trainable_memory_kernel,
+            )
 
         self.AT = self.add_weight(
             name="AT",
@@ -207,22 +210,28 @@ class LMUCell(Layer):
         """
         Contains the logic for one LMU step calculation.
         """
+        if not self.feed_forward:
+            h, m = states
 
-        h, m = states
+            u = (
+                K.dot(inputs, self.input_encoders)
+                + K.dot(h, self.hidden_encoders)
+                + K.dot(m, self.memory_encoders)
+            )
 
-        u = (
-            K.dot(inputs, self.input_encoders)
-            + K.dot(h, self.hidden_encoders)
-            + K.dot(m, self.memory_encoders)
-        )
+            m = m + K.dot(m, self.AT) + K.dot(u, self.BT)
 
-        m = m + K.dot(m, self.AT) + K.dot(u, self.BT)
+            h = self.hidden_activation(
+                K.dot(inputs, self.input_kernel)
+                + K.dot(h, self.hidden_kernel)
+                + K.dot(m, self.memory_kernel)
+            )
+        else:
+            h, m = states
 
-        h = self.hidden_activation(
-            K.dot(inputs, self.input_kernel)
-            + K.dot(h, self.hidden_kernel)
-            + K.dot(m, self.memory_kernel)
-        )
+            m = m + K.dot(m, self.AT) + K.dot(inputs, self.BT)
+
+            h = m
 
         return h, [h, m]
 
