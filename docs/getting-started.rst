@@ -51,7 +51,9 @@ The base class in NengoLMU is the cell contained in
    )
 
 Note these are arbitrary values for ``units``, ``order``, 
-and ``theta``.
+and ``theta``. ``units`` represents the size of the output
+vector. ``order`` represents the size of the memory cell. 
+And ``theta`` represents the size of the sliding window.
 
 Creating LMU Layers
 -------------------
