@@ -1,3 +1,4 @@
+***************
 Getting started
 ***************
 
@@ -9,7 +10,6 @@ To install NengoLMU, we recommend using ``pip``.
 .. code:: bash
 
    pip install lmu
-   pip install -e .
 
 Installing other packages
 -------------------------
@@ -19,8 +19,8 @@ The optional NengoLMU features require other packages.
 These can be installed either through
 Python's own package manager, ``pip``.
 
-- Additional decoder solvers and other speedups
-  require SciPy and scikit-learn.
+- Additional Legendre initializer
+  requires SciPy.
 - Running the test suite requires
   pytest, Matplotlib, and Jupyter.
 - Building the documentation requires
@@ -58,7 +58,9 @@ Creating LMU Layers
 
 We can connect cells to layers
 in order to integrate the lmu 
-within larger models.
+within larger models. Note thet
+the lmu is meant to be used with
+Tensorflow.
 
 .. testcode::
 
@@ -72,7 +74,6 @@ within larger models.
 Next steps
 ==========
 
-* If you're wondering how this works and you're not
-  familiar with the Neural Engineering Framework,
+* If you're wondering how this works,
   we recommend reading
-  `this technical overview <http://compneuro.uwaterloo.ca/files/publications/stewart.2012d.pdf>`_.
+  `this technical overview <http://compneuro.uwaterloo.ca/files/publications/voelker.2019.lmu.pdf>`_.

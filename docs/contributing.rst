@@ -105,7 +105,8 @@ as part of the documentation building process.
 
 If you wish to avoid running all examples, as some may
 take some time depending on the hardware it is being 
-run on, you can avoid these executions.
+run on, you can avoid these executions by running the 
+following command.
 
 .. code-block:: bash
 
