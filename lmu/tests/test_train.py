@@ -11,8 +11,19 @@ def test_trainable_A():
         units=212,
         order=256,
         theta=784,
-        method="", # fill in
+        trainable_A=True
     )
+
+    # do test
+
+    cell = LMUCell(
+        units=212,
+        order=256,
+        theta=784,
+        trainable_A=False
+    )
+
+    # do test
 
 
 def test_trainable_B():
@@ -21,8 +32,20 @@ def test_trainable_B():
         units=212,
         order=256,
         theta=784,
-        method="", # fill in
+        trainable_B=True
     )
+
+    # do test
+
+    cell = LMUCell(
+        units=212,
+        order=256,
+        theta=784,
+        trainable_B=False
+    )
+
+    # do test
+    
 
 
 def test_method():
