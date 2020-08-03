@@ -22,12 +22,6 @@ def test_create_cell():
     assert cell.units == 212
     assert cell.order == 256
     assert cell.theta == 784
-    #assert cell.input_encoders_initializer == initializers.get(Constant(1))
-    #assert cell.hidden_encoders_initializer == Constant(0)
-    #assert cell.memory_encoders_initializer == Constant(0)
-    #assert cell.input_kernel_initializer == Constant(0)
-    #assert cell.hidden_kernel_initializer == Constant(0)
-    #assert cell.memory_kernel_initializer == initializers.get("glorot_normal")
 
 
 test_create_cell()
