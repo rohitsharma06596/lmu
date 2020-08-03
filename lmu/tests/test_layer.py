@@ -15,6 +15,7 @@ def test_keras_rnn():
     )
 
     assert layer.cell.__class__.__name__ == 'LMUCell'
+    assert layer.cells[0].__class__.__name__ == 'LMUCell'
 
 
 def test_keras_bidirectional():
