@@ -775,7 +775,7 @@ class LMUModelFeedforward():
         self.theta = theta
         self.window_size, self.num_features = input_shape
 
-        self.model_preprocess = Sequential()
+        self.model_preprocess = Sequential(name="LMU_Preprocess")
         self.model_preprocess.add(
             Dense(
                 1,
@@ -798,7 +798,7 @@ class LMUModelFeedforward():
         )
 
         # Add hidden activation layer
-        self.model_feedforward = Sequential()
+        self.model_feedforward = Sequential(name="LMU_Output")
         self.add(
             Dense(
                 self.units,
