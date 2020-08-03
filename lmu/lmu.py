@@ -8,7 +8,8 @@ import numpy as np
 from tensorflow.keras import backend as K
 from tensorflow.keras import activations, initializers
 from tensorflow.keras.initializers import Constant, Initializer
-from tensorflow.keras.layers import Layer
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import RNN, Layer, Dense
 
 from nengolib.signal import Identity, cont2discrete
 from nengolib.synapses import LegendreDelay
@@ -238,7 +239,7 @@ class LMUCell(Layer):
                 order=self.order,
                 theta=self.theta,
                 method=self.method,
-                factor=self.factory,
+                factory=self.factory,
                 trainable_input_encoders=self.trainable_input_encoders,
                 trainable_hidden_encoders=self.trainable_hidden_encoders,
                 trainable_memory_encoders=self.trainable_memory_encoders,
@@ -669,3 +670,162 @@ class LMUCellGating(Layer):
         )
 
         return h, [h, m]
+
+
+class LMUCellPreprocess(Layer):
+    def __init__(
+        self,
+        order,
+        theta,  # relative to dt=1
+        method="zoh",
+        realizer=Identity(),  # TODO: Deprecate?
+        factory=LegendreDelay,  # TODO: Deprecate?
+        **kwargs
+    ):
+        super().__init__(**kwargs)
+
+        self.order = order
+        self.theta = theta
+        self.method = method
+        self.realizer = realizer
+        self.factory = factory
+
+        self._realizer_result = realizer(factory(theta=theta, order=self.order))
+        self._ss = cont2discrete(
+            self._realizer_result.realization, dt=1.0, method=method
+        )
+        self._A = self._ss.A - np.eye(order)  # puts into form: x += Ax
+        self._B = self._ss.B
+        self._C = self._ss.C
+        assert np.allclose(self._ss.D, 0)  # proper LTI
+
+        self.state_size = (self.order, self.order)
+        self.output_size = self.order
+
+    def build(self, input_shape):
+        """
+        Initializes various network parameters.
+        """
+
+        self.AT = self.add_weight(
+            name="AT",
+            shape=(self.order, self.order),
+            initializer=Constant(self._A.T),  # note: transposed
+            trainable=False,
+        )
+
+        self.BT = self.add_weight(
+            name="BT",
+            shape=(1, self.order),  # system is SISO
+            initializer=Constant(self._B.T),  # note: transposed
+            trainable=False,
+        )
+
+        self.built = True
+
+    def call(self, inputs, states):
+        """
+        Contains the logic for one LMU step calculation.
+        """
+        h, m = states
+
+        u = inputs
+
+        m = m + K.dot(m, self.AT) + K.dot(u, self.BT)
+
+        h = m
+
+        return h, [h, m]
+
+    def get_config(self):
+        """
+        Overrides the tensorflow get_config function.
+        """
+
+        config = super().get_config()
+        config.update(
+            dict(
+                order=self.order,
+                theta=self.theta,
+                method=self.method,
+                factory=self.factory,
+            )
+        )
+
+        return config
+
+
+class LMUModelFeedforward():
+    def __init__(
+        self,
+        units,
+        order,
+        theta,  # relative to dt=1
+        input_shape,
+        method="zoh",
+        realizer=Identity(),  # TODO: Deprecate?
+        factory=LegendreDelay,  # TODO: Deprecate?
+        trainable_input_encoders=False,
+        input_encoders_initializer=Constant(1),
+        hidden_activation="tanh",
+        **kwargs
+    ):
+        self.units = units
+        self.order = order
+        self.theta = theta
+        self.window_size, self.num_features = input_shape
+
+        self.model_preprocess = Sequential()
+        self.model_preprocess.add(
+            Dense(
+                1,
+                input_shape=input_shape,
+                kernel_initializer=input_encoders_initializer,
+                trainable=trainable_input_encoders
+            )
+        )
+        self.model_preprocess.add(
+            RNN(
+                LMUCellPreprocess(
+                    order=order,
+                    theta=theta,
+                    method=method,
+                    realizer=realizer,
+                    factory=factory
+                ),
+                return_sequences=False,
+            )
+        )
+
+        # Add hidden activation layer
+        self.model_feedforward = Sequential()
+        self.add(
+            Dense(
+                self.units,
+                input_shape=(self.order + self.num_features,),
+                activation=hidden_activation
+            )
+        )
+
+    def add(self, layer):
+        return self.model_feedforward.add(layer)
+
+    def preprocess_data(self, data):
+        data_preprocess = self.model_preprocess.predict(data)
+        return np.hstack((data_preprocess, data[:, self.window_size - 1, :]))
+
+    def fit(self, x, *args, **kwargs):
+        return self.model_feedforward.fit(self.preprocess_data(x), *args, **kwargs)
+
+    def evaluate(self, x, *args, **kwargs):
+        return self.model_feedforward.evaluate(self.preprocess_data(x), *args, **kwargs)
+
+    def predict(self, x, *args, **kwargs):
+        return self.model_feedforward.predict(self.preprocess_data(x), *args, **kwargs)
+
+    def compile(self, *args, **kwargs):
+        return self.model_feedforward.compile(*args, **kwargs)
+
+    def summary(self, *args, **kwargs):
+        self.model_preprocess.summary(*args, **kwargs)
+        self.model_feedforward.summary(*args, **kwargs)
