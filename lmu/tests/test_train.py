@@ -10,6 +10,7 @@ from tensorflow.keras.layers import RNN
 from tensorflow.keras.models import Sequential
 from lmu import LMUCell
 
+####################################################################################
 
 def generate_signal():
 
@@ -35,7 +36,7 @@ def lmu_layer(trainable_A, trainable_B, **kwargs):
             LMUCell(
                 units=10,
                 order=1,
-                theta=3,
+                theta=9999,
                 trainable_A=trainable_A,
                 trainable_B=trainable_B,
             ),
@@ -47,8 +48,11 @@ def lmu_layer(trainable_A, trainable_B, **kwargs):
 def get_A(layer):
     return layer.cell._A
 
+
 def get_B(layer):
     return layer.cell._B
+
+####################################################################################
 
 
 def test_trainable_A():
@@ -177,7 +181,7 @@ def test_method():
     )
 
 
-def test_method():
+def test_hidden_activation():
 
     cell = LMUCell(
         units=212,
@@ -188,3 +192,4 @@ def test_method():
 
 
 test_trainable_A()
+test_untrainable_A()
