@@ -30,6 +30,27 @@ def generate_signal():
     return sim.data[inp_p].T[0]
 
 
+def lmu_layer(trainable_A, trainable_B, **kwargs):
+        return RNN(
+            LMUCell(
+                units=10,
+                order=1,
+                theta=3,
+                trainable_A=trainable_A,
+                trainable_B=trainable_B,
+            ),
+            return_sequences=False,
+            **kwargs
+        )
+
+
+def get_A(layer):
+    return layer.cell._A
+
+def get_B(layer):
+    return layer.cell._B
+
+
 def test_trainable_A():
 
     unfiltered_data = generate_signal()
@@ -40,26 +61,11 @@ def test_trainable_A():
     X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
     Y_train = np.array([filtered_data[-1]])
 
-    print(X_train.shape)
-    print(Y_train.shape)
-
-    def lmu_layer(train, **kwargs):
-        return RNN(
-            LMUCell(
-                units=10,
-                order=1,
-                theta=3,
-                trainable_A=train,
-            ),
-            return_sequences=False,
-            **kwargs
-        )
-
     model = Sequential()
-    model.add(lmu_layer(True, input_shape=[9999, 1]))
-    model.compile(loss="categorical_crossentropy", optimizer="adam")
+    model.add(lmu_layer(True, False, input_shape=[9999, 1]))
+    model.compile(loss="sparse_categorical_crossentropy", optimizer="adam")
 
-    A_before = model.layers[0].cell._A
+    A_before = get_A(model.layers[0])
 
     result = model.fit(
         X_train,
@@ -68,52 +74,97 @@ def test_trainable_A():
         batch_size=1,
     )
 
-    A_after = model.layers[0].cell._A
+    A_after = get_A(model.layers[0])
 
     print(A_before)
     print(A_after)
 
-    # model = Sequential()
-    # model.add(lmu_layer(False, input_shape=X_train.shape[1:]))
-    # model.compile(loss="categorical_crossentropy", optimizer="adam")
 
-    # A_before = model.layers[0].cell._A
+def test_untrainable_A():
 
-    # model.fit(
-    #     X_train,
-    #     Y_train,
-    #     epochs=1,
-    #     batch_size=1,
-    # )
+    unfiltered_data = generate_signal()
+    filt = nengo.Lowpass(5, default_dt=1)
+    filtered_data = filt.filt(unfiltered_data)
 
-    # A_after = model.layers[0].cell._A
+    X_train = np.array([filtered_data[0:-1]])
+    X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
+    Y_train = np.array([filtered_data[-1]])
 
-    # print(A_before)
-    # print(A_after)
+    model = Sequential()
+    model.add(lmu_layer(False, False, input_shape=[9999, 1]))
+    model.compile(loss="sparse_categorical_crossentropy", optimizer="adam")
 
+    A_before = get_A(model.layers[0])
 
-test_trainable_A()
+    result = model.fit(
+        X_train,
+        to_categorical(Y_train),
+        epochs=1,
+        batch_size=1,
+    )
+
+    A_after = get_A(model.layers[0])
+
+    print(A_before)
+    print(A_after)
+
 
 def test_trainable_B():
 
-    cell = LMUCell(
-        units=212,
-        order=256,
-        theta=784,
-        trainable_B=True
+    unfiltered_data = generate_signal()
+    filt = nengo.Lowpass(5, default_dt=1)
+    filtered_data = filt.filt(unfiltered_data)
+
+    X_train = np.array([filtered_data[0:-1]])
+    X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
+    Y_train = np.array([filtered_data[-1]])
+
+    model = Sequential()
+    model.add(lmu_layer(False, True, input_shape=[9999, 1]))
+    model.compile(loss="sparse_categorical_crossentropy", optimizer="adam")
+
+    B_before = get_B(model.layers[0])
+
+    result = model.fit(
+        X_train,
+        to_categorical(Y_train),
+        epochs=1,
+        batch_size=1,
     )
 
-    # do test
+    B_after = get_B(model.layers[0])
 
-    cell = LMUCell(
-        units=212,
-        order=256,
-        theta=784,
-        trainable_B=False
+    print(B_before)
+    print(B_after)
+
+
+def test_untrainable_B():
+
+    unfiltered_data = generate_signal()
+    filt = nengo.Lowpass(5, default_dt=1)
+    filtered_data = filt.filt(unfiltered_data)
+
+    X_train = np.array([filtered_data[0:-1]])
+    X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
+    Y_train = np.array([filtered_data[-1]])
+
+    model = Sequential()
+    model.add(lmu_layer(False, False, input_shape=[9999, 1]))
+    model.compile(loss="sparse_categorical_crossentropy", optimizer="adam")
+
+    B_before = get_B(model.layers[0])
+
+    result = model.fit(
+        X_train,
+        to_categorical(Y_train),
+        epochs=1,
+        batch_size=1,
     )
 
-    # do test
-    
+    B_after = get_B(model.layers[0])
+
+    print(B_before)
+    print(B_after)
 
 
 def test_method():
@@ -134,3 +185,6 @@ def test_method():
         theta=784,
         method="",
     )
+
+
+test_trainable_A()
