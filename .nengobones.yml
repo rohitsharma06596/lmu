@@ -25,6 +25,8 @@ setup_py:
     - sphinx>=1.8
     - nbsphinx
     - nengo_sphinx_theme>=1.2.0
+  tests_req:
+    - nengo
   optional_req:
     - scipy
   classifiers:

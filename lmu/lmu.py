@@ -238,7 +238,7 @@ class LMUCell(Layer):
                 order=self.order,
                 theta=self.theta,
                 method=self.method,
-                factor=self.factory,
+                factory=self.factory,
                 trainable_input_encoders=self.trainable_input_encoders,
                 trainable_hidden_encoders=self.trainable_hidden_encoders,
                 trainable_memory_encoders=self.trainable_memory_encoders,
