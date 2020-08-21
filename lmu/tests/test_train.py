@@ -47,14 +47,14 @@ def lmu_layer(
             units=10,
             order=1,
             theta=9999,
-            trainable_input_encoders = trainable_input_encoders
-            trainable_hidden_encoders = trainable_hidden_encoders
-            trainable_memory_encoders = trainable_memory_encoders
-            trainable_input_kernel = trainable_input_kernel
-            trainable_hidden_kernel = trainable_hidden_kernel
-            trainable_memory_kernel = trainable_memory_kernel
-            trainable_A = trainable_A
-            trainable_B = trainable_B
+            trainable_input_encoders=trainable_input_encoders,
+            trainable_hidden_encoders=trainable_hidden_encoders,
+            trainable_memory_encoders=trainable_memory_encoders,
+            trainable_input_kernel=trainable_input_kernel,
+            trainable_hidden_kernel=trainable_hidden_kernel,
+            trainable_memory_kernel=trainable_memory_kernel,
+            trainable_A=trainable_A,
+            trainable_B=trainable_B,
         ),
         return_sequences=False,
         **kwargs
@@ -73,12 +73,8 @@ def create_mock_data():
     return X_train, Y_train
 
 
-def get_A(layer):
-    return layer.cell.AT
-
-
-def get_B(layer):
-    return layer.cell.BT
+def get_model_param(model, param):
+    return model.layers[0].cell.__dict__[param]
 
 
 def tmp():
@@ -103,14 +99,14 @@ def test_untrainability():
     model.add(lmu_layer(input_shape=[9999, 1]))
     model.compile(loss="sparse_categorical_crossentropy", optimizer="adam")
 
-    A_before = get_A(model.layers[0])
-    B_before = get_B(model.layers[0])
-    IE_before = get_IE(model.layers[0])
-    HE_before = get_HE(model.layers[0])
-    ME_before = get_ME(model.layers[0])
-    IK_before = get_IK(model.layers[0])
-    HK_before = get_HK(model.layers[0])
-    MK_before = get_MK(model.layers[0])
+    A_before = get_model_param(model, 'AT')
+    B_before = get_model_param(model, 'BT')
+    IE_before = get_model_param(model, 'input_encoders')
+    HE_before = get_model_param(model, 'hidden_encoders')
+    ME_before = get_model_param(model, 'memory_encoders')
+    IK_before = get_model_param(model, 'input_kernel')
+    HK_before = get_model_param(model, 'hidden_kernel')
+    MK_before = get_model_param(model, 'memory_kernel')
 
     result = model.fit(
         X_train,
@@ -119,14 +115,20 @@ def test_untrainability():
         batch_size=1,
     )
 
-    A_after = get_A(model.layers[0])
-    B_after = get_B(model.layers[0])
-    IE_after = get_IE(model.layers[0])
-    HE_after = get_HE(model.layers[0])
-    ME_after = get_ME(model.layers[0])
-    IK_after = get_IK(model.layers[0])
-    HK_after = get_HK(model.layers[0])
-    MK_after = get_MK(model.layers[0])
+    A_after = get_model_param(model, 'AT')
+    B_after = get_model_param(model, 'BT')
+    IE_after = get_model_param(model, 'input_encoders')
+    HE_after = get_model_param(model, 'hidden_encoders')
+    ME_after = get_model_param(model, 'memory_encoders')
+    IK_after = get_model_param(model, 'input_kernel')
+    HK_after = get_model_param(model, 'hidden_kernel')
+    MK_after = get_model_param(model, 'memory_kernel')
+
+    names = [weight.name for layer in model.layers for weight in layer.weights]
+    weights = model.get_weights()
+
+    for name, weight in zip(names, weights):
+        print(name, weight.shape)
 
     assert A_before == A_after
     assert B_before == B_after
@@ -138,33 +140,21 @@ def test_untrainability():
     assert MK_before == MK_after
 
 
-def test_trainable_A():
-    X_train, Y_train = create_mock_data()
-
-    model = Sequential()
-    model.add(lmu_layer(trainable_A=True, input_shape=[9999, 1]))
-    model.compile(loss="sparse_categorical_crossentropy", optimizer="adam")
-
-    A_before = get_A(model.layers[0])
-
-    model.fit(
-        X_train,
-        Y_train,
-        epochs=1,
-        batch_size=1,
-    )
-
-    A_after = get_A(model.layers[0])
-
-
-def test_untrainable_A():
+def test_trainability():
     X_train, Y_train = create_mock_data()
 
     model = Sequential()
     model.add(lmu_layer(input_shape=[9999, 1]))
     model.compile(loss="sparse_categorical_crossentropy", optimizer="adam")
 
-    A_before = get_A(model.layers[0])
+    A_before = get_model_param(model, 'AT')
+    B_before = get_model_param(model, 'BT')
+    IE_before = get_model_param(model, 'input_encoders')
+    HE_before = get_model_param(model, 'hidden_encoders')
+    ME_before = get_model_param(model, 'memory_encoders')
+    IK_before = get_model_param(model, 'input_kernel')
+    HK_before = get_model_param(model, 'hidden_kernel')
+    MK_before = get_model_param(model, 'memory_kernel')
 
     result = model.fit(
         X_train,
@@ -173,7 +163,42 @@ def test_untrainable_A():
         batch_size=1,
     )
 
-    A_after = get_A(model.layers[0])
+    A_after = get_model_param(model, 'AT')
+    B_after = get_model_param(model, 'BT')
+    IE_after = get_model_param(model, 'input_encoders')
+    HE_after = get_model_param(model, 'hidden_encoders')
+    ME_after = get_model_param(model, 'memory_encoders')
+    IK_after = get_model_param(model, 'input_kernel')
+    HK_after = get_model_param(model, 'hidden_kernel')
+    MK_after = get_model_param(model, 'memory_kernel')
+
+    # assert A_before == A_after
+    # assert B_before == B_after
+    # assert IE_before == IE_after
+    # assert HE_before == HE_after
+    # assert ME_before == ME_after
+    # assert IK_before == IK_after
+    # assert HK_before == HK_after
+    # assert MK_before == MK_after
+
+
+def test_trainable_A():
+    X_train, Y_train = create_mock_data()
+
+    model = Sequential()
+    model.add(lmu_layer(trainable_A=True, input_shape=[9999, 1]))
+    model.compile(loss="sparse_categorical_crossentropy", optimizer="adam")
+
+    A_before = get_model_param(model, 'AT')
+
+    model.fit(
+        X_train,
+        Y_train,
+        epochs=1,
+        batch_size=1,
+    )
+
+    A_after = get_model_param(model, 'AT')
 
 
 def test_trainable_B():
@@ -195,25 +220,6 @@ def test_trainable_B():
     B_after = get_B(model.layers[0])
 
 
-def test_untrainable_B():
-    X_train, Y_train = create_mock_data()
-    
-    model = Sequential()
-    model.add(lmu_layer(input_shape=[9999, 1]))
-    model.compile(loss="sparse_categorical_crossentropy", optimizer="adam")
-
-    B_before = get_B(model.layers[0])
-
-    result = model.fit(
-        X_train,
-        Y_train,
-        epochs=1,
-        batch_size=1,
-    )
-
-    B_after = get_B(model.layers[0])
-
-
 def test_trainable_IE():
     X_train, Y_train = create_mock_data()
     
@@ -221,7 +227,7 @@ def test_trainable_IE():
     model.add(lmu_layer(trainable_input_encoders=True, input_shape=[9999, 1]))
     model.compile(loss="sparse_categorical_crossentropy", optimizer="adam")
 
-    IE_before = get_IE(model.layers[0])
+    IE_before = get_model_param(model, 'input_encoders')
 
     result = model.fit(
         X_train,
@@ -230,11 +236,12 @@ def test_trainable_IE():
         batch_size=1,
     )
 
-    IE_after = get_IE(model.layers[0])
+    IE_after = get_model_param(model, 'input_encoders')
 
 
+test_untrainability()
 #tmp()
 #test_trainable_A()
 #test_untrainable_A()
-test_trainable_B()
-test_untrainable_B()
+# test_trainable_B()
+# test_untrainable_B()

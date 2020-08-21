@@ -37,7 +37,7 @@ def test_default_param_assignment():
     assert cell.hidden_activation == activations.get("tanh")
 
 
-def test_param_assignment():
+def test_custom_param_assignment():
 
     cell = LMUCell(
         units=212,
@@ -128,7 +128,21 @@ def test_build():
 
 
 def test_call():
-    pass
+    cell = LMUCell(
+        units=10,
+        order=5,
+        theta=10,
+    )
+
+    cell.build([1, 10])
+
+    inputs = np.array([[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]])
+    states = np.array([
+        [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1]],
+        [[2, 2, 2, 2, 2]]
+    ])
+
+    print(cell.call(inputs, states))
 
 
 def test_config():
@@ -162,9 +176,9 @@ def test_config():
     assert config["hidden_activation"] == activations.get("tanh")
 
 
-test_default_param_assignment()
-test_param_assignment()
-test_attr_assignment()
-test_build()
-#test_call()
-test_config()
+#test_default_param_assignment()
+#test_custom_param_assignment()
+#test_attr_assignment()
+#test_build()
+test_call()
+#test_config()
