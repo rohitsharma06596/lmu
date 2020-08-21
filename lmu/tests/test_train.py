@@ -76,19 +76,6 @@ def create_mock_data():
 def get_model_param(model, param):
     return model.layers[0].cell.__dict__[param]
 
-
-def tmp():
-    from nengo.utils.filter_design import cont2discrete
-    tau = 5
-    dt = 1
-    A = np.array([[1 / tau]])
-    B = np.array([[1 / tau]])
-    C = np.array([[1]])
-    D = np.array([[0]])
-    Ad, Bd, Cd, Dd, _ = cont2discrete((A, B, C, D), dt=dt)
-    print(Ad)
-    print(Bd)
-
 ####################################################################################
 
 

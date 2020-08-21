@@ -137,10 +137,10 @@ def test_call():
     cell.build([1, 10])
 
     inputs = np.array([[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]])
-    states = np.array([
+    states = [
         [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1]],
         [[2, 2, 2, 2, 2]]
-    ])
+    ]
 
     print(cell.call(inputs, states))
 
